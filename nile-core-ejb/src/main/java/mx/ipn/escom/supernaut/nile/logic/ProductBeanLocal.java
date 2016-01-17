@@ -4,10 +4,13 @@
  */
 package mx.ipn.escom.supernaut.nile.logic;
 
+import javax.ejb.Local;
+import mx.ipn.escom.supernaut.nile.model.Product;
+
 /**
  *
  * @author supernaut
  */
-public abstract class AbstractBean {
-
+@Local
+public interface ProductBeanLocal extends CommonBeanInterface<Integer, Product> {
 }

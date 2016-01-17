@@ -5,20 +5,17 @@
 package mx.ipn.escom.supernaut.nile.logic;
 
 import javax.ejb.Local;
-import mx.ipn.escom.supernaut.nile.model.Customer;
 import mx.ipn.escom.supernaut.nile.model.Order;
+import mx.ipn.escom.supernaut.nile.model.OrderPK;
+import mx.ipn.escom.supernaut.nile.model.Product;
 
 /**
  *
  * @author supernaut
  */
 @Local
-public interface CustomerBeanLocal extends CommonBeanInterface<Integer, Customer> {
+public interface OrderBeanLocal extends CommonBeanInterface<OrderPK, Order> {
 
-  void addOrder(Order order);
-
-  void initByUsername(String username);
-
-  boolean initWithLogin(String username, String pword);
+  void addProduct(Product product, int quantity);
 
 }
