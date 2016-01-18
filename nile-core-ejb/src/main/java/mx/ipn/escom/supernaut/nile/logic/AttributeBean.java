@@ -9,45 +9,41 @@ import mx.ipn.escom.supernaut.nile.model.Attribute;
 import mx.ipn.escom.supernaut.nile.model.Category;
 import mx.ipn.escom.supernaut.nile.model.CategoryDetail;
 import mx.ipn.escom.supernaut.nile.model.CategoryDetailPK;
-import mx.ipn.escom.supernaut.nile.model.Product;
 
 /**
  *
  * @author supernaut
  */
 @Stateful
-public class CategoryBean extends CommonBean<Short, Category> implements
-    CategoryBeanRemote, CategoryBeanLocal {
+public class AttributeBean extends CommonBean<Integer, Attribute> implements
+    AttributeBeanRemote, AttributeBeanLocal {
 
   @Override
   protected String getPkAsParams() {
-    return getModel().getCategoryId().toString();
+    return model.getAttributeId().toString();
   }
 
-  @Override
-  public void addProduct(Product product) {
-    product.getCategoryCollection().add(model);
-    model.getProductCollection().add(product);
-  }
+  // Add business logic below. (Right-click in editor and choose
+  // "Insert Code > Add Business Method")
 
   @Override
   public void addCategoryDetail(CategoryDetail categoryDetail) {
-    categoryDetail.setCategory1(model);
-    categoryDetail.getCategoryDetailPK().setCategory(model.getCategoryId());
+    categoryDetail.getCategoryDetailPK().setAttribute(model.getAttributeId());
+    categoryDetail.setAttribute1(model);
     model.getCategoryDetailCollection().add(categoryDetail);
   }
 
   @Override
-  public void addAttribute(Attribute attribute) {
+  public void addCategory(Category category) {
     CategoryDetail detail = new CategoryDetail();
-    detail.setCategory1(model);
-    detail.setAttribute1(attribute);
     CategoryDetailPK pk = new CategoryDetailPK();
-    pk.setCategory(model.getCategoryId());
-    pk.setAttribute(attribute.getAttributeId());
+    pk.setAttribute(model.getAttributeId());
+    pk.setCategory(category.getCategoryId());
     detail.setCategoryDetailPK(pk);
-    attribute.getCategoryDetailCollection().add(detail);
-    model.getCategoryDetailCollection().add(detail);
+    detail.setAttribute1(model);
+    detail.setCategory1(category);
+    model.getCategoryDetailCollection().add(category);
+    category.getCategoryDetailCollection().add(model);
   }
 
 }

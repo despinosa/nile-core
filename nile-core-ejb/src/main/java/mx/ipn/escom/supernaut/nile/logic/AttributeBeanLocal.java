@@ -7,20 +7,18 @@ package mx.ipn.escom.supernaut.nile.logic;
 import javax.ejb.Local;
 import mx.ipn.escom.supernaut.nile.model.Attribute;
 import mx.ipn.escom.supernaut.nile.model.Category;
-import mx.ipn.escom.supernaut.nile.model.Product;
-import mx.ipn.escom.supernaut.nile.model.ProductDetail;
+import mx.ipn.escom.supernaut.nile.model.CategoryDetail;
 
 /**
  *
  * @author supernaut
  */
 @Local
-public interface ProductBeanLocal extends CommonBeanInterface<Integer, Product> {
+public interface AttributeBeanLocal extends
+    CommonBeanInterface<Integer, Attribute> {
 
-  public void addCategory(Category category);
+    void addCategoryDetail(CategoryDetail categoryDetail);
 
-    void addProductDetail(ProductDetail productDetail);
-
-    void addAttribute(Attribute attribute, String value);
+    void addCategory(Category category);
 
 }

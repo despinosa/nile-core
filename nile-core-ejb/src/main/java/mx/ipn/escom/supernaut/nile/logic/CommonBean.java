@@ -16,8 +16,10 @@ import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
 import java.lang.reflect.ParameterizedType;
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import javax.ejb.PrePassivate;
+import org.apache.http.Header;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpHost;
 import org.apache.http.HttpResponse;
@@ -29,6 +31,7 @@ import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpPut;
 import org.apache.http.entity.InputStreamEntity;
 import org.apache.http.impl.client.HttpClients;
+import org.apache.http.message.BasicHeader;
 
 /**
  *
@@ -39,13 +42,19 @@ public abstract class CommonBean<PK, Model> implements
 
   protected static final HttpHost HOST =
       new HttpHost("localhost", 8081, "http");
-  protected final HttpClient CLIENT = HttpClients.createDefault();
+  protected static final Header JSON_IN_HEAD = new BasicHeader("accept",
+      "application/json; charset=utf-8");
+  protected static final Header JSON_OUT_HEAD = new BasicHeader("content-type",
+      "application/json; charset=utf-8");
+  protected final Gson gson;
+  protected final HttpClient client;
   protected final URI baseUri;
   protected final Class<Model> modelType;
-  protected static Gson gson = new Gson();
   protected Model model;
 
   public CommonBean() {
+    gson = new Gson();
+    client = HttpClients.createDefault();
     modelType =
         (Class<Model>) ((ParameterizedType) getClass().getGenericSuperclass())
             .getActualTypeArguments()[0];
@@ -56,33 +65,29 @@ public abstract class CommonBean<PK, Model> implements
 
   protected abstract String getPkAsParams();
 
-  protected InputStream streamedMarshall() {
+  protected InputStream streamedMarshall() throws IOException {
     PipedInputStream in = new PipedInputStream();
-    try {
-      OutputStream out = new PipedOutputStream(in);
-      JsonWriter writer = new JsonWriter(new OutputStreamWriter(out));
-      gson.toJson(model, modelType, writer);
-    } catch (IOException ex) {
-      throw new RuntimeException(ex);
-    }
+    OutputStream out = new PipedOutputStream(in);
+    JsonWriter writer =
+        new JsonWriter(new OutputStreamWriter(out, StandardCharsets.UTF_8));
+    gson.toJson(model, modelType, writer);
     return in;
   }
 
-  protected void storeModel(HttpEntity entity) throws IOException {
+  protected void streamedUnmarshall(HttpEntity entity) throws IOException {
     model =
-        (Model) gson.fromJson(
-            new JsonReader(new InputStreamReader(entity.getContent())),
-            modelType);
+        gson.fromJson(new JsonReader(new InputStreamReader(entity.getContent(),
+            StandardCharsets.UTF_8)), modelType);
   }
 
   @Override
   public void initByPK(PK pk) {
     HttpGet request = new HttpGet(baseUri + getPkAsParams());
-    request.addHeader("accept", "application/json");
+    request.addHeader(JSON_IN_HEAD);
     HttpResponse response;
     try {
-      response = CLIENT.execute(HOST, request);
-      storeModel(response.getEntity());
+      response = client.execute(HOST, request);
+      streamedUnmarshall(response.getEntity());
     } catch (IOException ex) {
       throw new RuntimeException(ex);
     }
@@ -94,11 +99,11 @@ public abstract class CommonBean<PK, Model> implements
   @Override
   public void initNew(Model model) {
     HttpPost request = new HttpPost(baseUri);
-    request.addHeader("accept", "application/json");
-    request.setEntity(new InputStreamEntity(streamedMarshall()));
+    request.addHeader(JSON_OUT_HEAD);
     HttpResponse response;
     try {
-      response = CLIENT.execute(HOST, request);
+      request.setEntity(new InputStreamEntity(streamedMarshall()));
+      response = client.execute(HOST, request);
     } catch (IOException ex) {
       throw new RuntimeException(ex);
     }
@@ -112,12 +117,14 @@ public abstract class CommonBean<PK, Model> implements
   public List<Model> getAll() {
     List<Model> list;
     HttpGet request = new HttpGet(baseUri);
+    request.addHeader(JSON_IN_HEAD);
     HttpResponse response;
     try {
-      response = CLIENT.execute(HOST, request);
+      response = client.execute(HOST, request);
       list =
-          gson.fromJson(new JsonReader(new InputStreamReader(response
-              .getEntity().getContent())), modelType);
+          (List<Model>) gson.fromJson(new JsonReader(new InputStreamReader(
+              response.getEntity().getContent(), StandardCharsets.UTF_8)),
+              List.class);
     } catch (IOException ex) {
       throw new RuntimeException(ex);
     }
@@ -137,7 +144,7 @@ public abstract class CommonBean<PK, Model> implements
     HttpDelete request = new HttpDelete(baseUri + getPkAsParams());
     HttpResponse response;
     try {
-      response = CLIENT.execute(HOST, request);
+      response = client.execute(HOST, request);
     } catch (IOException ex) {
       throw new RuntimeException(ex);
     }
@@ -150,10 +157,11 @@ public abstract class CommonBean<PK, Model> implements
   @PrePassivate
   public void commitModel() {
     HttpPut request = new HttpPut(baseUri + getPkAsParams());
-    request.setEntity(new InputStreamEntity(streamedMarshall()));
+    request.addHeader(JSON_OUT_HEAD);
     HttpResponse response;
     try {
-      response = CLIENT.execute(HOST, request);
+      request.setEntity(new InputStreamEntity(streamedMarshall()));
+      response = client.execute(HOST, request);
     } catch (IOException ex) {
       throw new RuntimeException(ex);
     }

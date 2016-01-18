@@ -5,7 +5,9 @@
 package mx.ipn.escom.supernaut.nile.logic;
 
 import javax.ejb.Local;
+import mx.ipn.escom.supernaut.nile.model.Attribute;
 import mx.ipn.escom.supernaut.nile.model.Category;
+import mx.ipn.escom.supernaut.nile.model.CategoryDetail;
 
 /**
  *
@@ -13,4 +15,8 @@ import mx.ipn.escom.supernaut.nile.model.Category;
  */
 @Local
 public interface CategoryBeanLocal extends CommonBeanInterface<Short, Category> {
+
+    void addCategoryDetail(CategoryDetail categoryDetail);
+
+    void addAttribute(Attribute attribute);
 }

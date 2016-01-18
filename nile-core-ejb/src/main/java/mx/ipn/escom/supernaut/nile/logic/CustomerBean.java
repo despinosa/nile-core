@@ -9,6 +9,7 @@ import java.security.NoSuchAlgorithmException;
 import java.security.spec.InvalidKeySpecException;
 import java.util.Date;
 import javax.ejb.Stateful;
+import mx.ipn.escom.supernaut.nile.model.Address;
 import mx.ipn.escom.supernaut.nile.model.Customer;
 import mx.ipn.escom.supernaut.nile.model.Order;
 import org.apache.http.HttpResponse;
@@ -25,17 +26,17 @@ public class CustomerBean extends CommonBean<Integer, Customer> implements
 
   @Override
   protected String getPkAsParams() {
-    return getModel().getCustomerId().toString();
+    return model.getCustomerId().toString();
   }
 
   @Override
   public void initByUsername(String username) {
-    HttpGet request = new HttpGet(baseUri + "/user/" + getPkAsParams());
-    request.addHeader("accept", "application/json");
+    HttpGet request = new HttpGet(baseUri + "/user/" + username);
+    request.addHeader(JSON_IN_HEAD);
     HttpResponse response;
     try {
-      response = CLIENT.execute(HOST, request);
-      storeModel(response.getEntity());
+      response = client.execute(HOST, request);
+      streamedUnmarshall(response.getEntity());
     } catch (IOException ex) {
       throw new RuntimeException(ex);
     }
@@ -50,8 +51,8 @@ public class CustomerBean extends CommonBean<Integer, Customer> implements
     boolean valid;
     try {
       valid =
-          PasswordHash.validatePassword(pword, getModel().getPwordHash(),
-              getModel().getPwordSalt());
+          PasswordHash.validatePassword(pword, model.getPwordHash(),
+              model.getPwordSalt());
     } catch (NoSuchAlgorithmException | InvalidKeySpecException ex) {
       throw new RuntimeException(ex);
     }
@@ -63,9 +64,25 @@ public class CustomerBean extends CommonBean<Integer, Customer> implements
 
   @Override
   public void addOrder(Order order) {
-    throw new UnsupportedOperationException("Not supported yet."); // To change body of generated
-                                                                   // methods, choose Tools |
-                                                                   // Templates.
+    order.setCustomer1(model);
+    order.getOrderPK().setCustomer(model.getCustomerId());
+    model.getOrderCollection().add(order);
+  }
+
+  @Override
+  public void setShippingAddress(Address address) {
+    address.setCustomer1(model);
+    address.getAddressPK().setCustomer(model.getCustomerId());
+    address.getAddressPK().setType(Address.Type.SHIPPING.toString());
+    model.getAddressCollection().add(address);
+  }
+
+  @Override
+  public void setBillingAddress(Address address) {
+    address.setCustomer1(model);
+    address.getAddressPK().setCustomer(model.getCustomerId());
+    address.getAddressPK().setType(Address.Type.BILLING.toString());
+    model.getAddressCollection().add(address);
   }
 
 }

@@ -4,8 +4,6 @@
  */
 package mx.ipn.escom.supernaut.nile.logic;
 
-import java.math.BigInteger;
-import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
@@ -20,8 +18,8 @@ import javax.crypto.spec.PBEKeySpec;
 public class PasswordHash {
   public static final String PBKDF2_ALGORITHM = "PBKDF2WithHmacSHA1";
 
-  public static final int SALT_BYTE_SIZE = 16;
-  public static final int HASH_BYTE_SIZE = 32;
+  public static final int SALT_BYTE_SIZE = 4 * 4;
+  public static final int HASH_BYTE_SIZE = 8 * 4;
   public static final int ITERATIONS = 0;
 
 
